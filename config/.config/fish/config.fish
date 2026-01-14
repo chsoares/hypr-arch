@@ -25,3 +25,6 @@ alias clear "printf '\033[2J\033[3J\033[1;1H'"
 
 # Fzf.fish
 fzf_configure_bindings --directory=\ce --variables=\e\cv
+
+# Created by `pipx` on 2025-09-12 19:57:02
+set PATH $PATH /home/chsoares/.local/bin
