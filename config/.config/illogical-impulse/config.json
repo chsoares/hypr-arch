@@ -55,7 +55,7 @@
         "borderless": false,
         "bottom": false,
         "cornerStyle": 1,
-        "multiMonitorMode": false,
+        "multiMonitorMode": true,
         "primaryMonitor": "HDMI-A-1",
         "resources": {
             "alwaysShowCpu": false,

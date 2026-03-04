@@ -20,8 +20,6 @@ fish
 hyprland
 hypridle
 hyprcursor
-hyprland-qtutils
-hyprland-qt-support
 hyprlang
 hyprlock
 hyprpicker
@@ -68,7 +66,7 @@ qt6-translations
 qt6-virtualkeyboard
 qt6-quicktimeline
 qt6-avif-image-plugin
-qt6gtk2
+#qt6gtk2
 adw-gtk-theme-git
 gtk4
 libadwaita
@@ -147,7 +145,7 @@ gum
 grub
 grub-btrfs
 inotify-tools
-#os-prober
+os-prober
 efibootmgr
 
 # === USER APPLICATIONS ===
