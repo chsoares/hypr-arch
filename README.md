@@ -42,7 +42,8 @@ The install script will:
 - `Super` = Toggle overview/launcher
 - `Super+I` = Open settings
 - `Super+H` = Toggle cheatsheet
-- `Super+Return` = Terminal
+- `Super+Return` = Spotlight search
+- `Super+T` = Terminal
 - `Super+E` = File manager
 - `Super+Ctrl+Alt+T` = Random wallpaper
 
