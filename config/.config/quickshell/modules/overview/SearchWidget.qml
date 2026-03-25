@@ -178,7 +178,7 @@ Item { // Wrapper
         implicitWidth: columnLayout.implicitWidth
         implicitHeight: columnLayout.implicitHeight
         radius: Appearance.rounding.large
-        color: Appearance.colors.colLayer0
+        color: Qt.rgba(Appearance.m3colors.m3background.r, Appearance.m3colors.m3background.g, Appearance.m3colors.m3background.b, 0.85)
 
         ColumnLayout {
             id: columnLayout
