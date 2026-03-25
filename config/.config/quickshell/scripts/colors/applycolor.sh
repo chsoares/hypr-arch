@@ -182,8 +182,8 @@ apply_hypr() {
     done
     
     if [ -n "$term6_value" ]; then
-      # Update the fullscreen windowrulev2 border color
-      sed -i "s/windowrulev2 = bordercolor rgba([^)]*), fullscreen:1/windowrulev2 = bordercolor rgba(${term6_value}AA), fullscreen:1/g" "$HYPR_COLORS_FILE"
+      # Update the fullscreen windowrule border color
+      sed -i "/name = windowrule-colors-fullscreen/{n;s/border_color = rgba([^)]*AA)/border_color = rgba(${term6_value}AA)/}" "$HYPR_COLORS_FILE"
     fi
     
   fi

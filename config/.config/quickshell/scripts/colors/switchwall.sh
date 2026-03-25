@@ -269,7 +269,8 @@ switch() {
     pre_process "$mode_flag"
 
     # Run matugen and python color generation in parallel for speed
-    matugen "${matugen_args[@]}" &
+    # --source-color-index 0: pick most dominant color automatically (was default before matugen 4.x)
+    matugen "${matugen_args[@]}" --source-color-index 0 &
     MATUGEN_PID=$!
     
     # Generate colors in parallel while matugen runs
