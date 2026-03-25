@@ -240,8 +240,8 @@ switch() {
         else
             matugen_args=(image "$imgpath")
             generate_colors_material_args=(--path "$imgpath")
-            # Set wallpaper with swww
-            swww img "$imgpath" --transition-step 100 --transition-fps 120 \
+            # Set wallpaper with awww
+            awww img "$imgpath" --transition-step 100 --transition-fps 120 \
                 --transition-type grow --transition-angle 30 --transition-duration 1 \
                 --transition-pos "$cursorposx, $cursorposy_inverted" &
             remove_restore
@@ -372,7 +372,7 @@ main() {
                 ;;
             --noswitch)
                 noswitch_flag="1"
-                imgpath=$(swww query | awk -F 'image: ' '{print $2}')
+                imgpath=$(awww query | awk -F 'image: ' '{print $2}')
                 shift
                 ;;
             *)
@@ -405,8 +405,8 @@ main() {
 
     # Handle --noswitch mode: use current wallpaper if no imgpath specified
     if [[ -n "$noswitch_flag" && -z "$imgpath" && -z "$color_flag" ]]; then
-        # Try to get current wallpaper from swww
-        current_wallpaper=$(swww query | head -1 | sed 's/.*image: //' | tr -d '\n\r')
+        # Try to get current wallpaper from awww
+        current_wallpaper=$(awww query | head -1 | sed 's/.*image: //' | tr -d '\n\r')
         if [[ -n "$current_wallpaper" && -f "$current_wallpaper" ]]; then
             imgpath="$current_wallpaper"
         else

@@ -41,7 +41,7 @@ ContentPage {
                     console.log(`Material palette selected: ${newValue}`);
                     Config.options.appearance.palette.type = newValue;
                     // Apply the new palette immediately by reprocessing current wallpaper
-                    Quickshell.execDetached(["bash", "-c", `current_wallpaper=$(swww query | head -1 | sed 's/.*image: //' | tr -d '\\n\\r'); ${Directories.wallpaperSwitchScriptPath} "$current_wallpaper" --type ${newValue}`]);
+                    Quickshell.execDetached(["bash", "-c", `current_wallpaper=$(awww query | head -1 | sed 's/.*image: //' | tr -d '\\n\\r'); ${Directories.wallpaperSwitchScriptPath} "$current_wallpaper" --type ${newValue}`]);
                     // Force theme reload after a short delay
                     delayedReloadTimer.restart();
                 }

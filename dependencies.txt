@@ -121,7 +121,7 @@ python-opencv
 # === COLOR & WALLPAPER ===
 matugen-bin
 kde-material-you-colors
-swww
+awww
 
 # === UTILITIES ===
 kitty

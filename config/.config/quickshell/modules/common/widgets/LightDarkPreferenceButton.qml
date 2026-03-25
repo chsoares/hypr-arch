@@ -20,7 +20,7 @@ RippleButton {
     toggled: Appearance.m3colors.darkmode === dark
     onClicked: {
         // Get current wallpaper and apply it with the new mode (without --noswitch so it properly applies colors)
-        Quickshell.execDetached(["bash", "-c", `current_wallpaper=$(swww query | head -1 | sed 's/.*image: //' | tr -d '\\n\\r'); ${Directories.wallpaperSwitchScriptPath} "$current_wallpaper" --mode ${dark ? "dark" : "light"}`])
+        Quickshell.execDetached(["bash", "-c", `current_wallpaper=$(awww query | head -1 | sed 's/.*image: //' | tr -d '\\n\\r'); ${Directories.wallpaperSwitchScriptPath} "$current_wallpaper" --mode ${dark ? "dark" : "light"}`])
     }
     contentItem: Item {
         anchors.centerIn: parent

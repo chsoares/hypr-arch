@@ -49,13 +49,13 @@ Item { // Wrapper
         {
             action: "dark",
             execute: () => {
-                executor.executeCommand(`current_wallpaper=$(swww query | head -1 | sed 's/.*image: //' | tr -d '\\n\\r'); ${Directories.wallpaperSwitchScriptPath} "$current_wallpaper" --mode dark`)
+                executor.executeCommand(`current_wallpaper=$(awww query | head -1 | sed 's/.*image: //' | tr -d '\\n\\r'); ${Directories.wallpaperSwitchScriptPath} "$current_wallpaper" --mode dark`)
             }
         },
         {
             action: "light",
             execute: () => {
-                executor.executeCommand(`current_wallpaper=$(swww query | head -1 | sed 's/.*image: //' | tr -d '\\n\\r'); ${Directories.wallpaperSwitchScriptPath} "$current_wallpaper" --mode light`)
+                executor.executeCommand(`current_wallpaper=$(awww query | head -1 | sed 's/.*image: //' | tr -d '\\n\\r'); ${Directories.wallpaperSwitchScriptPath} "$current_wallpaper" --mode light`)
             }
         },
         {

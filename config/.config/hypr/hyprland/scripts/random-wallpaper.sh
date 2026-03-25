@@ -43,8 +43,8 @@ echo "[DEBUG] Using fallback. Checking path: $FALLBACK_PATH"
 if [ -f "$FALLBACK_PATH" ]; then
     STORED_WALLPAPER=$(cat "$FALLBACK_PATH")
     echo "[DEBUG] Found stored wallpaper: $STORED_WALLPAPER"
-    echo "[DEBUG] Applying fallback wallpaper with swww"
-    swww img "$STORED_WALLPAPER" --transition-step 100 --transition-fps 120 --transition-type grow --transition-angle 30 --transition-duration 1
+    echo "[DEBUG] Applying fallback wallpaper with awww"
+    awww img "$STORED_WALLPAPER" --transition-step 100 --transition-fps 120 --transition-type grow --transition-angle 30 --transition-duration 1
 else
     echo "[DEBUG] Error: No wallpaper found and no fallback path available"
     exit 1
