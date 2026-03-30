@@ -11,7 +11,9 @@ VM_STORAGE="$HOME/.windows"
 SHARED_DIR="$HOME/Windows"
 DESKTOP_FILE="$HOME/.local/share/applications/windows-vm.desktop"
 RDP_PORT=3389
+SSH_PORT=2222
 WEB_PORT=8006
+OEM_DIR="$HOME/.config/windows/oem"
 
 # Colors
 RED='\e[31m'
@@ -141,8 +143,15 @@ cmd_install() {
     local tz
     tz=$(timedatectl show -p Timezone --value 2>/dev/null || echo "UTC")
 
-    # Generate compose file
-    mkdir -p "$(dirname "$COMPOSE_FILE")" "$VM_STORAGE" "$SHARED_DIR"
+    # Generate compose file and OEM post-install scripts
+    mkdir -p "$(dirname "$COMPOSE_FILE")" "$VM_STORAGE" "$SHARED_DIR" "$OEM_DIR"
+
+    # Copy post-install script (enables OpenSSH Server)
+    local script_dir
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    if [[ -f "$script_dir/windows-oem/install.bat" ]]; then
+        cp -f "$script_dir/windows-oem/install.bat" "$OEM_DIR/install.bat"
+    fi
 
     cat > "$COMPOSE_FILE" << EOF
 services:
@@ -167,9 +176,11 @@ services:
       - 127.0.0.1:$WEB_PORT:8006
       - 127.0.0.1:$RDP_PORT:3389/tcp
       - 127.0.0.1:$RDP_PORT:3389/udp
+      - 127.0.0.1:$SSH_PORT:22
     volumes:
       - $VM_STORAGE:/storage
       - $SHARED_DIR:/shared
+      - $OEM_DIR:/oem
     restart: unless-stopped
     stop_grace_period: 2m
 EOF
@@ -344,6 +355,20 @@ cmd_restore() {
     ok "Snapshot '$chosen' restored."
 }
 
+cmd_ssh() {
+    if ! is_running; then
+        err "VM is not running. Start it with 'windows-vm launch -k' or 'windows-vm start'"
+        exit 1
+    fi
+
+    local win_user
+    win_user=$(grep 'USERNAME:' "$COMPOSE_FILE" | head -1 | sed 's/.*: *"\?\([^"]*\)"\?/\1/')
+
+    msg "Connecting via SSH..."
+    ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+        -p "$SSH_PORT" "$win_user@127.0.0.1" "$@"
+}
+
 cmd_status() {
     if [[ ! -f "$COMPOSE_FILE" ]]; then
         echo "Not installed. Run 'windows-vm install'"
@@ -358,6 +383,7 @@ cmd_status() {
         echo -e "Status:  ${GREEN}Running${NC}"
         echo "Web:     http://127.0.0.1:$WEB_PORT"
         echo "RDP:     127.0.0.1:$RDP_PORT"
+        echo "SSH:     127.0.0.1:$SSH_PORT"
     elif is_created; then
         echo -e "Status:  ${YELLOW}Stopped${NC}"
     else
@@ -404,6 +430,7 @@ Commands:
   start             Start VM without connecting
   stop              Stop the VM
   remove            Remove VM, image, and all data
+  ssh [cmd]         Connect via SSH (or run a command)
   snapshot          Create a snapshot of the VM disk
   restore           Restore a previous snapshot
   status            Show VM status and connection info
@@ -415,6 +442,7 @@ case "${1:-}" in
     launch)   cmd_launch "${2:-}" ;;
     start)    cmd_start ;;
     stop)     cmd_stop ;;
+    ssh)      shift; cmd_ssh "$@" ;;
     remove)   cmd_remove ;;
     snapshot) cmd_snapshot ;;
     restore)  cmd_restore ;;

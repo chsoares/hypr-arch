@@ -439,9 +439,10 @@ setup_windows_vm() {
     # Create shared directory
     mkdir -p "$HOME/Windows"
 
-    # Install windows-vm script
+    # Install windows-vm script and OEM post-install files
     mkdir -p "$HOME/.local/bin"
     cp -f "$base/bin/windows-vm" "$HOME/.local/bin/windows-vm"
+    cp -rf "$base/bin/windows-oem" "$HOME/.local/bin/windows-oem"
     chmod +x "$HOME/.local/bin/windows-vm"
     print_success "windows-vm script installed to ~/.local/bin/"
 
