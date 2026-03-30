@@ -420,6 +420,40 @@ setup_fish_plugins() {
     print_success "Fish plugins installed successfully"
 }
 
+# Setup Docker and Windows VM prerequisites
+setup_windows_vm() {
+    print_step "Setting up Docker for Windows VM..."
+
+    # Enable Docker daemon
+    sudo systemctl enable docker --now
+    print_success "Docker service enabled"
+
+    # Add user to docker group if not already
+    if ! groups "$(whoami)" | grep -q docker; then
+        sudo usermod -aG docker "$(whoami)"
+        print_warning "Added user to docker group (logout/login required for group to take effect)"
+    else
+        print_success "User already in docker group"
+    fi
+
+    # Create shared directory
+    mkdir -p "$HOME/Windows"
+
+    # Install windows-vm script
+    mkdir -p "$HOME/.local/bin"
+    cp -f "$base/bin/windows-vm" "$HOME/.local/bin/windows-vm"
+    chmod +x "$HOME/.local/bin/windows-vm"
+    print_success "windows-vm script installed to ~/.local/bin/"
+
+    # Install Windows VM icon
+    mkdir -p "$HOME/.local/share/icons/hicolor/scalable/apps"
+    cp -f "$base/config/.local/share/applications/icons/windows.svg" \
+        "$HOME/.local/share/icons/hicolor/scalable/apps/windows-vm.svg"
+    print_success "Windows VM icon installed"
+
+    print_success "Docker setup complete. Run 'windows-vm install' to set up the Windows VM."
+}
+
 # Install dotfiles using rsync (like END4)
 install_dotfiles() {
     print_step "Installing dotfiles to ~/.config/..."
@@ -528,6 +562,9 @@ setup_desktop_settings
 
 # Install dotfiles
 install_dotfiles
+
+# Setup Docker and Windows VM
+setup_windows_vm
 
 # Install Fish plugins
 setup_fish_plugins

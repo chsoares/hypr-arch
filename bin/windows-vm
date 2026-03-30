@@ -1,0 +1,430 @@
+#!/usr/bin/env bash
+
+# Windows VM management script using dockur/windows (Docker + QEMU/KVM)
+# Connects via RDP with wlfreerdp3 (Wayland) or xfreerdp3 (X11 fallback)
+
+set -euo pipefail
+
+COMPOSE_FILE="$HOME/.config/windows/docker-compose.yml"
+CONTAINER_NAME="windows-vm"
+VM_STORAGE="$HOME/.windows"
+SHARED_DIR="$HOME/Windows"
+DESKTOP_FILE="$HOME/.local/share/applications/windows-vm.desktop"
+RDP_PORT=3389
+WEB_PORT=8006
+
+# Colors
+RED='\e[31m'
+GREEN='\e[32m'
+BLUE='\e[34m'
+YELLOW='\e[33m'
+NC='\e[0m'
+
+msg()     { echo -e "${BLUE}[windows-vm] $1${NC}"; }
+err()     { echo -e "${RED}[windows-vm] ERROR: $1${NC}" >&2; }
+ok()      { echo -e "${GREEN}[windows-vm] $1${NC}"; }
+warn()    { echo -e "${YELLOW}[windows-vm] $1${NC}"; }
+
+###############################################################################
+# Helpers
+###############################################################################
+
+get_rdp_client() {
+    # xfreerdp3 works well on both X11 and Wayland (via XWayland)
+    # wlfreerdp3 is deprecated and has mouse cursor bugs
+    if command -v xfreerdp3 >/dev/null 2>&1; then
+        echo "xfreerdp3"
+    else
+        echo ""
+    fi
+}
+
+check_deps() {
+    local missing=()
+    for cmd in docker gum jq; do
+        command -v "$cmd" >/dev/null 2>&1 || missing+=("$cmd")
+    done
+    if [[ -z "$(get_rdp_client)" ]]; then
+        missing+=("freerdp (wlfreerdp3/xfreerdp3)")
+    fi
+    if [[ ${#missing[@]} -gt 0 ]]; then
+        err "Missing dependencies: ${missing[*]}"
+        err "Install with: yay -S docker docker-buildx docker-compose freerdp gum jq"
+        exit 1
+    fi
+    if [[ ! -e /dev/kvm ]]; then
+        err "/dev/kvm not found. Enable VT-x/AMD-V in BIOS."
+        exit 1
+    fi
+}
+
+is_running() {
+    docker inspect -f '{{.State.Running}}' "$CONTAINER_NAME" 2>/dev/null | grep -q true
+}
+
+is_created() {
+    docker inspect "$CONTAINER_NAME" >/dev/null 2>&1
+}
+
+wait_for_rdp() {
+    msg "Waiting for Windows to boot (RDP on port $RDP_PORT)..."
+    local attempts=0
+    while ! nc -z 127.0.0.1 "$RDP_PORT" 2>/dev/null; do
+        sleep 2
+        attempts=$((attempts + 1))
+        if [[ $attempts -ge 150 ]]; then
+            err "Timeout waiting for RDP. Check install progress at http://127.0.0.1:$WEB_PORT"
+            exit 1
+        fi
+    done
+    # Give Windows a moment after RDP port opens
+    sleep 3
+    ok "Windows is ready."
+}
+
+get_hypr_scale() {
+    local scale
+    scale=$(hyprctl monitors -j 2>/dev/null | jq -r '.[] | select(.focused == true) | .scale' 2>/dev/null || echo "1")
+    local pct
+    pct=$(echo "$scale" | awk '{print int($1 * 100)}')
+    if [[ $pct -ge 170 ]]; then
+        echo "/scale:180"
+    elif [[ $pct -ge 130 ]]; then
+        echo "/scale:140"
+    else
+        echo ""
+    fi
+}
+
+###############################################################################
+# Commands
+###############################################################################
+
+cmd_install() {
+    check_deps
+
+    if [[ -f "$COMPOSE_FILE" ]]; then
+        warn "Existing configuration found at $COMPOSE_FILE"
+        if ! gum confirm "Overwrite existing configuration?"; then
+            msg "Aborted."
+            exit 0
+        fi
+    fi
+
+    msg "Windows VM Setup"
+    echo
+
+    # CPU cores
+    local max_cores
+    max_cores=$(nproc)
+    local core_options=()
+    for ((i=1; i<=max_cores; i++)); do core_options+=("$i"); done
+    local default_cores=$((max_cores / 2))
+    [[ $default_cores -lt 2 ]] && default_cores=2
+
+    local cores
+    cores=$(gum choose --header "CPU cores (you have $max_cores):" "${core_options[@]}" --selected "$default_cores")
+
+    # RAM
+    local ram
+    ram=$(gum choose --header "RAM allocation:" "2G" "4G" "8G" "16G" "32G" --selected "8G")
+
+    # Disk
+    local disk
+    disk=$(gum choose --header "Disk size:" "32G" "64G" "128G" "256G" "512G" --selected "64G")
+
+    # Username/password
+    local username="admin"
+    local password="admin"
+
+    # Timezone
+    local tz
+    tz=$(timedatectl show -p Timezone --value 2>/dev/null || echo "UTC")
+
+    # Generate compose file
+    mkdir -p "$(dirname "$COMPOSE_FILE")" "$VM_STORAGE" "$SHARED_DIR"
+
+    cat > "$COMPOSE_FILE" << EOF
+services:
+  windows:
+    image: dockurr/windows
+    container_name: $CONTAINER_NAME
+    environment:
+      VERSION: "11l"
+      RAM_SIZE: "$ram"
+      CPU_CORES: "$cores"
+      DISK_SIZE: "$disk"
+      USERNAME: "$username"
+      PASSWORD: "$password"
+      TZ: "$tz"
+      ARGUMENTS: "-rtc base=localtime,clock=host,driftfix=slew"
+    devices:
+      - /dev/kvm
+      - /dev/net/tun
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - 127.0.0.1:$WEB_PORT:8006
+      - 127.0.0.1:$RDP_PORT:3389/tcp
+      - 127.0.0.1:$RDP_PORT:3389/udp
+    volumes:
+      - $VM_STORAGE:/storage
+      - $SHARED_DIR:/shared
+    restart: unless-stopped
+    stop_grace_period: 2m
+EOF
+
+    ok "Configuration saved to $COMPOSE_FILE"
+    echo
+    echo "  CPU:  $cores cores"
+    echo "  RAM:  $ram"
+    echo "  Disk: $disk"
+    echo "  User: $username / $password"
+    echo "  Windows: 11 LTSC"
+    echo
+
+    # Install desktop entry
+    install_desktop_entry
+
+    if gum confirm "Start the VM now? (first run downloads Windows 11 LTSC ~4.7 GB)"; then
+        cmd_start
+        echo
+        msg "Monitor installation progress at http://127.0.0.1:$WEB_PORT"
+        msg "Once installed, use 'windows-vm launch' to connect via RDP."
+    else
+        msg "Run 'windows-vm launch' when ready to start and connect."
+    fi
+}
+
+cmd_start() {
+    if [[ ! -f "$COMPOSE_FILE" ]]; then
+        err "No configuration found. Run 'windows-vm install' first."
+        exit 1
+    fi
+    if is_running; then
+        ok "VM is already running."
+        return
+    fi
+    msg "Starting Windows VM..."
+    docker compose -f "$COMPOSE_FILE" up -d
+    ok "VM started."
+}
+
+cmd_launch() {
+    check_deps
+
+    if [[ ! -f "$COMPOSE_FILE" ]]; then
+        err "No configuration found. Run 'windows-vm install' first."
+        exit 1
+    fi
+
+    local keep_alive=false
+    [[ "${1:-}" == "-k" ]] && keep_alive=true
+
+    # Start container if not running
+    if ! is_running; then
+        cmd_start
+    fi
+
+    wait_for_rdp
+
+    # Read credentials from compose file
+    local win_user win_pass
+    win_user=$(grep 'USERNAME:' "$COMPOSE_FILE" | head -1 | sed 's/.*: *"\?\([^"]*\)"\?/\1/')
+    win_pass=$(grep 'PASSWORD:' "$COMPOSE_FILE" | head -1 | sed 's/.*: *"\?\([^"]*\)"\?/\1/')
+
+    local rdp_scale
+    rdp_scale=$(get_hypr_scale)
+
+    local rdp_client
+    rdp_client=$(get_rdp_client)
+
+    # Disable Kerberos to avoid ~60s timeout on each connection
+    export KRB5_CONFIG=/dev/null
+
+    msg "Connecting via RDP ($rdp_client)..."
+    $rdp_client /u:"$win_user" /p:"$win_pass" /v:127.0.0.1:$RDP_PORT \
+        -grab-keyboard /sound /microphone /clipboard /cert:ignore \
+        /title:"Windows VM" /dynamic-resolution \
+        /gfx:AVC444 /floatbar:sticky:off,default:visible,show:fullscreen \
+        /sec:tls $rdp_scale || true
+
+    if [[ "$keep_alive" == false ]]; then
+        msg "RDP session ended. Stopping VM..."
+        cmd_stop
+    else
+        msg "RDP session ended. VM still running (use 'windows-vm stop' to shut down)."
+    fi
+}
+
+cmd_stop() {
+    if [[ ! -f "$COMPOSE_FILE" ]]; then
+        err "No configuration found."
+        exit 1
+    fi
+    msg "Stopping Windows VM..."
+    docker compose -f "$COMPOSE_FILE" down
+    ok "VM stopped."
+}
+
+cmd_remove() {
+    warn "This will remove the VM container, image, and all data in $VM_STORAGE"
+    if ! gum confirm "Are you sure?"; then
+        msg "Aborted."
+        exit 0
+    fi
+
+    if [[ -f "$COMPOSE_FILE" ]]; then
+        docker compose -f "$COMPOSE_FILE" down 2>/dev/null || true
+    fi
+
+    # Remove container and image
+    docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
+    docker rmi dockurr/windows 2>/dev/null || true
+
+    # Remove data
+    rm -rf "$VM_STORAGE"
+    rm -f "$COMPOSE_FILE"
+    rm -f "$DESKTOP_FILE"
+
+    ok "Windows VM completely removed."
+}
+
+cmd_snapshot() {
+    if is_running; then
+        warn "VM is running. Snapshots are safer with the VM stopped."
+        if ! gum confirm "Continue anyway?"; then
+            msg "Stop the VM first with 'windows-vm stop'"
+            exit 0
+        fi
+    fi
+
+    local snap_name
+    snap_name=$(gum input --placeholder "Snapshot name (e.g. clean-install)" --value "snapshot-$(date +%Y%m%d-%H%M%S)")
+    [[ -z "$snap_name" ]] && snap_name="snapshot-$(date +%Y%m%d-%H%M%S)"
+
+    local snap_dir="$VM_STORAGE-snapshots/$snap_name"
+    mkdir -p "$snap_dir"
+
+    msg "Creating snapshot '$snap_name'..."
+    msg "Copying $VM_STORAGE -> $snap_dir (this may take a while)..."
+    cp -a "$VM_STORAGE/." "$snap_dir/"
+    ok "Snapshot saved to $snap_dir"
+}
+
+cmd_restore() {
+    local snap_base="$VM_STORAGE-snapshots"
+    if [[ ! -d "$snap_base" ]] || [[ -z "$(ls -A "$snap_base" 2>/dev/null)" ]]; then
+        err "No snapshots found in $snap_base"
+        exit 1
+    fi
+
+    if is_running; then
+        err "VM is running. Stop it first with 'windows-vm stop'"
+        exit 1
+    fi
+
+    local snapshots=()
+    for d in "$snap_base"/*/; do
+        [[ -d "$d" ]] && snapshots+=("$(basename "$d")")
+    done
+
+    local chosen
+    chosen=$(printf '%s\n' "${snapshots[@]}" | gum choose --header "Select snapshot to restore:")
+
+    warn "This will overwrite the current VM disk with snapshot '$chosen'"
+    if ! gum confirm "Continue?"; then
+        msg "Aborted."
+        exit 0
+    fi
+
+    msg "Restoring snapshot '$chosen'..."
+    rm -rf "$VM_STORAGE"
+    cp -a "$snap_base/$chosen" "$VM_STORAGE"
+    ok "Snapshot '$chosen' restored."
+}
+
+cmd_status() {
+    if [[ ! -f "$COMPOSE_FILE" ]]; then
+        echo "Not installed. Run 'windows-vm install'"
+        return
+    fi
+
+    echo "Config:  $COMPOSE_FILE"
+    echo "Storage: $VM_STORAGE"
+    echo "Shared:  $SHARED_DIR"
+
+    if is_running; then
+        echo -e "Status:  ${GREEN}Running${NC}"
+        echo "Web:     http://127.0.0.1:$WEB_PORT"
+        echo "RDP:     127.0.0.1:$RDP_PORT"
+    elif is_created; then
+        echo -e "Status:  ${YELLOW}Stopped${NC}"
+    else
+        echo -e "Status:  ${RED}Not started${NC}"
+    fi
+
+    # Show snapshots
+    local snap_base="$VM_STORAGE-snapshots"
+    if [[ -d "$snap_base" ]] && [[ -n "$(ls -A "$snap_base" 2>/dev/null)" ]]; then
+        echo
+        echo "Snapshots:"
+        for d in "$snap_base"/*/; do
+            [[ -d "$d" ]] && echo "  - $(basename "$d")"
+        done
+    fi
+}
+
+install_desktop_entry() {
+    mkdir -p "$(dirname "$DESKTOP_FILE")"
+    cat > "$DESKTOP_FILE" << EOF
+[Desktop Entry]
+Name=Windows
+Comment=Start Windows 11 LTSC VM and connect with RDP
+Exec=$HOME/.local/bin/windows-vm launch -k
+Icon=windows-vm
+Terminal=false
+Type=Application
+Categories=System;Virtualization;
+EOF
+    ok "Desktop entry installed at $DESKTOP_FILE"
+}
+
+###############################################################################
+# Main
+###############################################################################
+
+usage() {
+    cat << 'EOF'
+Usage: windows-vm <command>
+
+Commands:
+  install           Interactive setup wizard (choose resources, generate config)
+  launch [-k]       Start VM and connect via RDP (-k: keep VM running after disconnect)
+  start             Start VM without connecting
+  stop              Stop the VM
+  remove            Remove VM, image, and all data
+  snapshot          Create a snapshot of the VM disk
+  restore           Restore a previous snapshot
+  status            Show VM status and connection info
+EOF
+}
+
+case "${1:-}" in
+    install)  cmd_install ;;
+    launch)   cmd_launch "${2:-}" ;;
+    start)    cmd_start ;;
+    stop)     cmd_stop ;;
+    remove)   cmd_remove ;;
+    snapshot) cmd_snapshot ;;
+    restore)  cmd_restore ;;
+    status)   cmd_status ;;
+    -h|--help|help) usage ;;
+    *)
+        if [[ -n "${1:-}" ]]; then
+            err "Unknown command: $1"
+        fi
+        usage
+        exit 1
+        ;;
+esac

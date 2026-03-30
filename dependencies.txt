@@ -141,6 +141,13 @@ bat
 pacman-contrib
 gum
 
+# === DOCKER & WINDOWS VM ===
+docker
+docker-buildx
+docker-compose
+freerdp
+gnu-netcat
+
 # === BOOTLOADER & SNAPSHOTS ===
 grub
 grub-btrfs

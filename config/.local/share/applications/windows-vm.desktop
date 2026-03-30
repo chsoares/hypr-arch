@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Windows
+Comment=Start Windows 11 LTSC VM and connect with RDP
+Exec=windows-vm launch -k
+Icon=windows-vm
+Terminal=false
+Type=Application
+Categories=System;Virtualization;
