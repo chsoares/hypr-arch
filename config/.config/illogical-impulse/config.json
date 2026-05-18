@@ -56,7 +56,7 @@
         "bottom": false,
         "cornerStyle": 1,
         "multiMonitorMode": true,
-        "primaryMonitor": "DP-3",
+        "primaryMonitor": "HDMI-A-1",
         "resources": {
             "alwaysShowCpu": false,
             "alwaysShowSwap": true

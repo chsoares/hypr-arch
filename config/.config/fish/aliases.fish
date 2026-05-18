@@ -7,8 +7,8 @@ alias ls 'eza --icons --group-directories-first'
 alias tree 'eza --icons --tree --group-directories-first'
 
 ## Abbreviations
-abbr --add yay 'yay -Sy'
-abbr --add install 'yay -Sy'
+abbr --add yay 'yay -S'
+abbr --add install 'yay -S'
 abbr --add uninstall 'yay -R'
 abbr --add update 'yay -Syu --noconfirm'
 
