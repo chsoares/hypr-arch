@@ -22,7 +22,7 @@ Rectangle {
 
     Process {
         id: packageListProcess
-        command: ["yay", "-Qu"]
+        command: ["checkupdates"]
         running: false
         
         property string accumulatedOutput: ""
@@ -48,8 +48,8 @@ Rectangle {
                         console.log(`UpdatesList: Parsing line "${line}" -> parts:`, parts)
                         return {
                             name: parts[0],
-                            currentVersion: parts[1] || "",
-                            newVersion: parts[3] || parts[2] || ""
+                            currentVersion: "",
+                            newVersion: parts[1] || ""
                         };
                     });
                     console.log(`UpdatesList: Final packagesList:`, root.packagesList)
@@ -122,7 +122,7 @@ Rectangle {
                     }
 
                     StyledText {
-                        text: qsTr("%1 → %2").arg(modelData.currentVersion).arg(modelData.newVersion)
+                        text: modelData.newVersion
                         font.pixelSize: Appearance.font.pixelSize.small
                         color: Appearance.m3colors.m3outline
                         elide: Text.ElideRight

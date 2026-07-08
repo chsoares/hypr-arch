@@ -12,7 +12,7 @@ Item {
     
     Process {
         id: yayProcess
-        command: ["yay", "-Qu"]
+        command: ["checkupdates"]
         running: false
         
         stdout: SplitParser {
