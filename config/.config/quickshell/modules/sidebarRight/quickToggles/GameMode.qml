@@ -37,7 +37,7 @@ QuickToggleButton {
         running: true
         command: ["bash", "-c", `test "$(hyprctl getoption animations:enabled -j | jq '.bool')" = "false"`]
         onExited: (exitCode, exitStatus) => {
-            root.toggled = exitCode !== 0 // Inverted because enabled = nonzero exit
+            root.toggled = exitCode === 0
         }
     }
     StyledToolTip {
