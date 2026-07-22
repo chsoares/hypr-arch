@@ -179,7 +179,7 @@ Scope {
                             const dx = mouse.x - barLeftSideMouseArea.lastScrollX;
                             const dy = mouse.y - barLeftSideMouseArea.lastScrollY;
                             if (Math.sqrt(dx*dx + dy*dy) > osdHideMouseMoveThreshold) {
-                                Hyprland.dispatch('global quickshell:osdBrightnessHide')
+                                Hyprland.dispatch('hl.dsp.global("quickshell:osdBrightnessHide")')
                                 barLeftSideMouseArea.trackingScroll = false;
                             }
                         }
@@ -293,7 +293,7 @@ Scope {
                                 
                                 onPressed: (event) => {
                                     if (event.button === Qt.RightButton) {
-                                        Hyprland.dispatch('global quickshell:overviewToggle')
+                                        Hyprland.dispatch('hl.dsp.global("quickshell:overviewToggle")')
                                     }
                                 }
                             }
@@ -357,7 +357,7 @@ Scope {
                     }
                     onPressed: (event) => {
                         if (event.button === Qt.LeftButton) {
-                            Hyprland.dispatch('global quickshell:sidebarRightOpen')
+                            Hyprland.dispatch('hl.dsp.global("quickshell:sidebarRightOpen")')
                         }
                         else if (event.button === Qt.RightButton) {
                             MprisController.activePlayer.next()
@@ -384,7 +384,7 @@ Scope {
                             const dx = mouse.x - barRightSideMouseArea.lastScrollX;
                             const dy = mouse.y - barRightSideMouseArea.lastScrollY;
                             if (Math.sqrt(dx*dx + dy*dy) > osdHideMouseMoveThreshold) {
-                                Hyprland.dispatch('global quickshell:osdVolumeHide')
+                                Hyprland.dispatch('hl.dsp.global("quickshell:osdVolumeHide")')
                                 barRightSideMouseArea.trackingScroll = false;
                             }
                         }

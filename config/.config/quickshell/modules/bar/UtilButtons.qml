@@ -24,7 +24,7 @@ Item {
             visible: Config.options.bar.utilButtons.showScreenSnip
             sourceComponent: CircleUtilButton {
                 Layout.alignment: Qt.AlignVCenter
-                onClicked: Hyprland.dispatch("exec hyprshot --freeze --clipboard-only --mode region --silent")
+                onClicked: Hyprland.dispatch('hl.dsp.exec_cmd("hyprshot --freeze --clipboard-only --mode region --silent")')
                 MaterialSymbol {
                     horizontalAlignment: Qt.AlignHCenter
                     fill: 1
@@ -40,7 +40,7 @@ Item {
             visible: Config.options.bar.utilButtons.showColorPicker
             sourceComponent: CircleUtilButton {
                 Layout.alignment: Qt.AlignVCenter
-                onClicked: Hyprland.dispatch("exec hyprpicker -a")
+                onClicked: Hyprland.dispatch('hl.dsp.exec_cmd("hyprpicker -a")')
                 MaterialSymbol {
                     horizontalAlignment: Qt.AlignHCenter
                     fill: 1
@@ -56,7 +56,7 @@ Item {
             visible: Config.options.bar.utilButtons.showKeyboardToggle
             sourceComponent: CircleUtilButton {
                 Layout.alignment: Qt.AlignVCenter
-                onClicked: Hyprland.dispatch("global quickshell:oskToggle")
+                onClicked: Hyprland.dispatch('hl.dsp.global("quickshell:oskToggle")')
                 MaterialSymbol {
                     horizontalAlignment: Qt.AlignHCenter
                     fill: 0
@@ -72,7 +72,7 @@ Item {
             visible: Config.options.bar.utilButtons.showMicToggle
             sourceComponent: CircleUtilButton {
                 Layout.alignment: Qt.AlignVCenter
-                onClicked: Hyprland.dispatch("exec wpctl set-mute @DEFAULT_SOURCE@ toggle")
+                onClicked: Hyprland.dispatch('hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_SOURCE@ toggle")')
                 MaterialSymbol {
                     horizontalAlignment: Qt.AlignHCenter
                     fill: 0
@@ -90,9 +90,9 @@ Item {
                 Layout.alignment: Qt.AlignVCenter
                 onClicked: event => {
                     if (Appearance.m3colors.darkmode) {
-                        Hyprland.dispatch(`exec ${Directories.wallpaperSwitchScriptPath} --mode light --noswitch`);
+                        Hyprland.dispatch(`hl.dsp.exec_cmd("${Directories.wallpaperSwitchScriptPath} --mode light --noswitch")`);
                     } else {
-                        Hyprland.dispatch(`exec ${Directories.wallpaperSwitchScriptPath} --mode dark --noswitch`);
+                        Hyprland.dispatch(`hl.dsp.exec_cmd("${Directories.wallpaperSwitchScriptPath} --mode dark --noswitch")`);
                     }
                 }
                 MaterialSymbol {

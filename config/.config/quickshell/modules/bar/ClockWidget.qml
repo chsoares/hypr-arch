@@ -30,7 +30,7 @@ Item {
                 acceptedButtons: Qt.LeftButton
                 onPressed: (event) => {
                     if (event.button === Qt.LeftButton) {
-                        Hyprland.dispatch("global quickshell:calendarMonitorToggle")
+                        Hyprland.dispatch('hl.dsp.global("quickshell:calendarMonitorToggle")')
                     }
                 }
             }
@@ -72,7 +72,7 @@ Item {
                 acceptedButtons: Qt.LeftButton
                 onPressed: (event) => {
                     if (event.button === Qt.LeftButton) {
-                        Hyprland.dispatch("global quickshell:weatherMonitorToggle")
+                        Hyprland.dispatch('hl.dsp.global("quickshell:weatherMonitorToggle")')
                     }
                 }
             }
@@ -113,7 +113,7 @@ Item {
                 acceptedButtons: Qt.LeftButton
                 onPressed: (event) => {
                     if (event.button === Qt.LeftButton) {
-                        Hyprland.dispatch("global quickshell:clockMonitorToggle")
+                        Hyprland.dispatch('hl.dsp.global("quickshell:clockMonitorToggle")')
                     }
                 }
             }

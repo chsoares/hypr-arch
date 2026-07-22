@@ -219,7 +219,7 @@ Item { // Notification item area
 
                     onLinkActivated: (link) => {
                         Qt.openUrlExternally(link)
-                        Hyprland.dispatch("global quickshell:sidebarRightClose")
+                        Hyprland.dispatch('hl.dsp.global("quickshell:sidebarRightClose")')
                     }
                     
                     PointingHandLinkHover {}

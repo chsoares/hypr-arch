@@ -23,7 +23,7 @@ Item {
         acceptedButtons: Qt.LeftButton
         onPressed: (event) => {
             if (event.button === Qt.LeftButton) {
-                Hyprland.dispatch("global quickshell:resourceMonitorToggle")
+                Hyprland.dispatch('hl.dsp.global("quickshell:resourceMonitorToggle")')
             }
         }
     }

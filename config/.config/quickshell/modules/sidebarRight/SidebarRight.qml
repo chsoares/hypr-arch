@@ -137,7 +137,7 @@ Scope {
                                     toggled: false
                                     buttonIcon: "restart_alt"
                                     onClicked: {
-                                        Hyprland.dispatch("reload")
+                                        Hyprland.dispatch('reload')
                                         Quickshell.reload(true)
                                     }
                                     StyledToolTip {
@@ -149,7 +149,7 @@ Scope {
                                     buttonIcon: "flare"
                                     onClicked: {
                                         Quickshell.execDetached(["kitty", "-e", "fish", "-c", "source ~/.config/quickshell/scripts/housekeeping.fish; read -P 'Press any key to continue...'"])
-                                        Hyprland.dispatch("global quickshell:sidebarRightClose")
+                                        Hyprland.dispatch('hl.dsp.global("quickshell:sidebarRightClose")')
                                     }
                                     StyledToolTip {
                                         content: qsTr("Update & Housekeeping")
@@ -159,7 +159,7 @@ Scope {
                                     toggled: false
                                     buttonIcon: "settings"
                                     onClicked: {
-                                        Hyprland.dispatch("global quickshell:sidebarRightClose")
+                                        Hyprland.dispatch('hl.dsp.global("quickshell:sidebarRightClose")')
                                         Quickshell.execDetached(["qs", "-p", root.settingsQmlPath])
                                     }
                                     StyledToolTip {
@@ -170,7 +170,7 @@ Scope {
                                     toggled: false
                                     buttonIcon: "power_settings_new"
                                     onClicked: {
-                                        Hyprland.dispatch("global quickshell:sessionOpen")
+                                        Hyprland.dispatch('hl.dsp.global("quickshell:sessionOpen")')
                                     }
                                     StyledToolTip {
                                         content: qsTr("Session")

@@ -57,9 +57,9 @@ Item {
     WheelHandler {
         onWheel: (event) => {
             if (event.angleDelta.y < 0)
-                Hyprland.dispatch(`workspace r+1`);
+                Hyprland.dispatch(`hl.dsp.focus({workspace=\"r+1\"})`);
             else if (event.angleDelta.y > 0)
-                Hyprland.dispatch(`workspace r-1`);
+                Hyprland.dispatch(`hl.dsp.focus({workspace=\"r-1\"})`);
         }
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
     }
@@ -69,7 +69,7 @@ Item {
         acceptedButtons: Qt.BackButton
         onPressed: (event) => {
             if (event.button === Qt.BackButton) {
-                Hyprland.dispatch(`togglespecialworkspace`);
+                Hyprland.dispatch(`hl.dsp.workspace.toggle_special(\"special\")`);
             } 
         }
     }
@@ -241,7 +241,7 @@ Item {
                     workspaceApps.length > 0 ? workspaceApps.length * (workspaceIconSize + iconSpacing) - iconSpacing + 6 : workspaceMinWidth)
                 
                 Layout.fillHeight: true
-                onPressed: Hyprland.dispatch(`workspace ${workspaceValue}`)
+                onPressed: Hyprland.dispatch(`hl.dsp.focus({workspace=\"${workspaceValue}\"})`)
                 width: calculatedWidth
                 
                 background: Item {
